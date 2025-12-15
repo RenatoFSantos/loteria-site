@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milionária da Sorte</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e5799 0%, #207cca 50%, #7db9e8 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            backdrop-filter: blur(5px);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+        }
+
+        header p {
+            margin: 10px 0 0;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 90%;
+            width: 800px;
+            margin: 20px auto;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 10px;
+            margin: 30px auto;
+            max-width: 100%;
+        }
+
+        .number {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            cursor: pointer;
+            user-select: none;
+            background-color: #fff;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .number:hover {
+            border-color: #4CAF50;
+            transform: scale(1.05);
+        }
+
+        .number.selected {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+            transform: scale(1.1);
+        }
+
+        .controls {
+            margin: 30px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+        }
+
+        select, button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        select {
+            min-width: 180px;
+        }
+
+        button {
+            background-color: #FF9800;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #e68900;
+        }
+
+        #generate-btn {
+            background-color: #4CAF50;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+        }
+
+        #generate-btn:hover {
+            background-color: #45a049;
+        }
+
+        #json-output {
+            margin-top: 30px;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(8, 1fr);
+                gap: 12px;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .container {
+                padding: 20px;
+                margin: 15px;
+            }
+
+            .number {
+                font-size: 0.95rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 10px;
+            }
+
+            header h1 {
+                font-size: 1.6rem;
+            }
+
+            header p {
+                font-size: 1rem;
+            }
+
+            .controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            select, button {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .number {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Milionária da Sorte</h1>
+        <p>Escolha seus números da sorte e quem sabe você será o próximo milionário!</p>
+    </header>
+
+    <div class="container">
+        <h2>Selecione de 6 a 10 números</h2>
+        <div class="grid" id="number-grid"></div>
+
+        <div class="controls">
+            <label for="num-select">Quantidade de números:</label>
+            <select id="num-select">
+                <option value="6">6 números</option>
+                <option value="7">7 números</option>
+                <option value="8">8 números</option>
+                <option value="9">9 números</option>
+                <option value="10">10 números</option>
+            </select>
+
+            <button id="random-btn">Selecionar Aleatórios</button>
+            <button id="generate-btn">Boa Sorte! 🍀</button>
+        </div>
+
+        <div id="json-output"></div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('number-grid');
+        const numSelect = document.getElementById('num-select');
+        const randomBtn = document.getElementById('random-btn');
+        const generateBtn = document.getElementById('generate-btn');
+        const jsonOutput = document.getElementById('json-output');
+
+        // Criar grid de 01 a 60
+        for (let i = 1; i <= 60; i++) {
+            const num = document.createElement('div');
+            num.classList.add('number');
+            num.textContent = i.toString().padStart(2, '0');
+            num.dataset.value = i;
+            num.addEventListener('click', toggleSelect);
+            grid.appendChild(num);
+        }
+
+        function toggleSelect(event) {
+            const target = event.target;
+            const currentCount = document.querySelectorAll('.number.selected').length;
+            const maxCount = parseInt(numSelect.value);
+
+            if (target.classList.contains('selected')) {
+                target.classList.remove('selected');
+            } else if (currentCount < maxCount) {
+                target.classList.add('selected');
+            } else {
+                alert(`Você só pode selecionar até ${maxCount} números.`);
+            }
+        }
+
+        function getSelectedNumbers() {
+            return Array.from(document.querySelectorAll('.number.selected'))
+                .map(el => parseInt(el.dataset.value))
+                .sort((a, b) => a - b);
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.number.selected').forEach(el => el.classList.remove('selected'));
+        }
+
+        randomBtn.addEventListener('click', () => {
+            clearSelection();
+            const count = parseInt(numSelect.value);
+            const numbers = Array.from({length: 60}, (_, i) => i + 1);
+            
+            // Embaralhar
+            for (let i = numbers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+            }
+
+            const selected = numbers.slice(0, count);
+            selected.forEach(num => {
+                const el = document.querySelector(`.number[data-value="${num}"]`);
+                if (el) el.classList.add('selected');
+            });
+        });
+
+        generateBtn.addEventListener('click', () => {
+            const selected = getSelectedNumbers();
+            const required = parseInt(numSelect.value);
+
+            if (selected.length < 6 || selected.length > 10) {
+                alert('Selecione entre 6 e 10 números.');
+                return;
+            }
+
+            if (selected.length !== required) {
+                alert(`Você deve selecionar exatamente ${required} números. Atualmente selecionados: ${selected.length}`);
+                return;
+            }
+
+            const json = JSON.stringify({ numeros: selected }, null, 2);
+            jsonOutput.textContent = json;
+            jsonOutput.style.display = 'block';
+        });
+
+        // Atualizar limite quando mudar a quantidade
+        numSelect.addEventListener('change', () => {
+            const currentSelected = getSelectedNumbers();
+            const newMax = parseInt(numSelect.value);
+
+            if (currentSelected.length > newMax) {
+                // Desmarcar os excedentes (os últimos selecionados)
+                const toKeep = currentSelected.slice(0, newMax);
+                clearSelection();
+                toKeep.forEach(num => {
+                    const el = document.querySelector(`.number[data-value="${num}"]`);
+                    if (el) el.classList.add('selected');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
